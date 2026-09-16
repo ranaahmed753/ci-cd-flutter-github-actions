@@ -26,7 +26,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  FLUTTER_VERSION: '3.44.2'
+  FLUTTER_VERSION: '3.24.5'
   JAVA_VERSION: '17'
 
 permissions:
@@ -131,8 +131,22 @@ jobs:
         if: env.KEYSTORE_BASE64 != ''
         env:
           KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_FILENAME: upload-key.jks
         run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-key.jks
+          # --ignore-garbage tolerates stray newlines/whitespace introduced
+          # when a secret is copy-pasted through the GitHub UI or a shell.
+          # NOTE: this project's android/build.gradle resolves storeFile
+          # relative to android/, not android/app/ (confirmed by the
+          # validateSigningRelease error path) — write it there.
+          echo "$KEYSTORE_BASE64" | base64 --decode --ignore-garbage > "android/${KEYSTORE_FILENAME}"
+
+          # Fail fast with a clear message instead of a broken keystore
+          # surfacing as a mysterious signing error two steps later.
+          if ! keytool -list -keystore "android/${KEYSTORE_FILENAME}" \
+                -storepass "${{ secrets.ANDROID_STORE_PASSWORD }}" > /dev/null 2>&1; then
+            echo "::error::Decoded keystore is invalid. Regenerate the ANDROID_KEYSTORE_BASE64 secret with: base64 -w 0 your-keystore.jks (macOS: base64 -i your-keystore.jks | tr -d '\n')"
+            exit 1
+          fi
 
       - name: Create key.properties
         if: env.KEYSTORE_BASE64 != ''
@@ -141,12 +155,13 @@ jobs:
           KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
           STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          KEYSTORE_FILENAME: upload-key.jks
         run: |
           cat <<EOF > android/key.properties
           storePassword=$STORE_PASSWORD
           keyPassword=$KEY_PASSWORD
           keyAlias=$KEY_ALIAS
-          storeFile=upload-key.jks
+          storeFile=$KEYSTORE_FILENAME
           EOF
 
       - name: Build APK (release)
@@ -178,5 +193,5 @@ jobs:
       - name: Clean up signing files
         if: always()
         run: |
-          rm -f android/app/upload-key.jks
+          rm -f android/upload-key.jks
           rm -f android/key.properties
