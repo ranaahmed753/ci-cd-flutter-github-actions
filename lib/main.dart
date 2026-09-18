@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/widget_previews.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
+  @Preview(name: "test",textScaleFactor: 0.2,brightness: Brightness.light)
   const MyApp({super.key});
 
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'CI/CD Github Actions',
+      title: 'CI/CD Github Actions Version 2',
       theme: ThemeData(
         // This is the theme of your application.
         //
