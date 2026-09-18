@@ -1,12 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/widget_previews.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
 class MyApp extends StatelessWidget {
-  @Preview(name: "test",textScaleFactor: 0.2,brightness: Brightness.light)
   const MyApp({super.key});
 
   // This widget is the root of your application.
