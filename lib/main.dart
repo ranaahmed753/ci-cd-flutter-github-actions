@@ -6,7 +6,7 @@ void main() {
 }
 
 class MyApp extends StatelessWidget {
-  @Preview(name: "test",textScaleFactor: 0.2,brightness: Brightness.light)
+  @Preview(name: "test", textScaleFactor: 0.2, brightness: Brightness.light)
   const MyApp({super.key});
 
   // This widget is the root of your application.
